@@ -2,7 +2,7 @@
 
 $currentDir = isset($_GET['dir']) ? $_GET['dir'] : '.';
 $files = scandir($currentDir);
-$parentDir = dirname($currentDir);
+$rootDir = htmlspecialchars($_SERVER['PHP_SELF']);
 
 echo '
 <!DOCTYPE html>
@@ -10,10 +10,11 @@ echo '
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Texplore</title>
+    <title>Tillexplorer</title>
     <style>
         body{font-family:Arial,sans-serif; margin:20px; background-color:#121212; color:#e0e0e0}
         .container{padding:10px; background:#282828; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1)}
+        h2, h3{text-align:center; color:#9b4afb;}
         .file-list{list-style-type:none; padding:0; margin:0}
         .file-item{margin-bottom:8px}
         .file-link{display:block; background-color:#383A40; padding:10px 15px; color:#e0e0e0; border-radius:4px; text-decoration:none}
@@ -29,20 +30,35 @@ echo '
 <body>
     <div class="container">
         <div class="path-container">
-            <a href="' . htmlspecialchars($_SERVER['PHP_SELF']) . '" class="back-button"> ／ </a>
-            <a href="' . htmlspecialchars($_SERVER['PHP_SELF']) . '?dir=' . htmlspecialchars($parentDir) . '" class="back-button">• •</a>
+            <a href="' . $rootDir . '" class="back-button"> 🛆 </a>
+            <a href="' . $rootDir . '?dir=' . htmlspecialchars(dirname($currentDir)) . '" class="back-button">• •</a>
             <div class="current-path">' . getcwd() . '/' . htmlspecialchars($currentDir) . '</div>
         </div>
         <ul class="file-list">';
-foreach ($files as $file) {
-    if ($file != '.' && $file != '..' && $file != 'index.php') {
-        $filePath = $currentDir == '.' ? $file : $currentDir . '/' . $file;
-        if (is_dir($filePath)) {
-            echo '<li class="file-item"><a class="file-link dir" href="' . htmlspecialchars($_SERVER['PHP_SELF']) . '?dir=' . htmlspecialchars($filePath) . '">📁 ' . htmlspecialchars($file) . '</a></li>';
-        } elseif (is_file($filePath)) {
-            echo '<li class="file-item"><a class="file-link file" href="' . htmlspecialchars($filePath) . '">📄 ' . htmlspecialchars($file) . '</a></li>';
+if (mb_substr($currentDir, 0, 1) != '/' && is_dir($currentDir)) {
+    foreach ($files as $file) {
+        if ($file != '.' && $file != '..' && $file != 'index.php') {
+            $filePath = $currentDir == '.' ? $file : $currentDir . '/' . $file;
+
+            if (is_dir($filePath)) {
+                echo '<li class="file-item"><a class="file-link dir" href="' . htmlspecialchars($_SERVER['PHP_SELF']) . '?dir=' . htmlspecialchars($filePath) . '">📁 ' . htmlspecialchars($file) . '</a></li>';
+            } elseif (is_file($filePath)) {
+                $emoji = '📄';
+
+                if (getimagesize($filePath) !== false) {
+                    $emoji = '🖼️';
+                }
+                elseif (0 === strpos(mime_content_type($filePath), 'video/')) {
+                    $emoji = '🎬';
+                }
+
+                echo '<li class="file-item"><a class="file-link file" href="' . htmlspecialchars($filePath) . '"> ' . $emoji . ' ' . htmlspecialchars($file) . '</a></li>';
+            }
         }
     }
+}
+else {
+    echo '<h2>Directory not found! (404)</h2><h3>Dont modify the url text</h3>';
 }
 echo '        </ul>
     </div>
