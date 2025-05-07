@@ -10,9 +10,10 @@ function upload_file($file, $subdir) {
     return move_uploaded_file($tmpFilePath, $subdir . $targetFileName);
 }
 
-if (isset($_FILES['fileToUpload'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['fileToUpload'])) {
     upload_file($_FILES['fileToUpload'], $currentDir);
-    header("Refresh:0");
+    header("Location: " . $rootDir . "?dir=" . urlencode($currentDir) . "&uploaded=1");
+    exit;
 }
 
 echo '
@@ -75,7 +76,8 @@ if (mb_substr($currentDir, 0, 1) != '/' && is_dir($currentDir)) {
     }
 }
 else {
-    header("Refresh:0; url=$rootDir");
+    header("Location: $rootDir");
+    exit;
 }
 echo '</ul>
     </div>
